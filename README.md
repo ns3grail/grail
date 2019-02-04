@@ -21,7 +21,7 @@ Simply check out the repository and build/run the docker file.
 Note that the `--privileged` option is strictly required to allow intercepting system calls via `ptrace`:
 
 ```sh
-git clone https://gitlab.informatik.hu-berlin.de/grail/grail-module grail
+git clone https://github.com/ns3grail/grail.git grail
 cd grail
 docker build -t grail .
 docker run --privileged -it grail
@@ -76,7 +76,7 @@ To download ns-3.29 *and* install gRaIL, you may follow these instructions:
 ```sh
   git clone --branch ns-3.29 https://github.com/nsnam/ns-3-dev-git ns-3.29
   cd ns-3.29/src
-  git clone https://gitlab.informatik.hu-berlin.de/grail/grail-module grail
+  git clone https://github.com/ns3grail/grail.git grail
   cd ..
   ./waf configure
   # check in output that gRaIL is enabled, then build project:
