@@ -1,0 +1,8 @@
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+def build(bld):
+    obj = bld.create_ns3_program('grail-olsr-example', ['grail','olsr','flow-monitor','applications','csma'])
+    obj.source = 'grail-olsr-example.cc'
+
+    obj = bld.create_ns3_program('grail-iperf-example', ['grail','flow-monitor','applications'])
+    obj.source = 'grail-iperf-example.cc'

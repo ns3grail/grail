@@ -1,0 +1,51 @@
+image: docker:stable
+services:
+ - docker:dind
+
+stages:
+ - build
+ - test
+
+variables:
+ CONTAINER_IMAGE: gitlab.informatik.hu-berlin.de:4567/$CI_PROJECT_PATH
+ CXX: 'clang++'
+ CC:  'clang'
+
+build:
+ stage: build
+ script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN gitlab.informatik.hu-berlin.de:4567
+  - docker pull $CONTAINER_IMAGE:latest || true
+  - docker build --cache-from $CONTAINER_IMAGE:latest --tag $CONTAINER_IMAGE:$CI_COMMIT_SHA --tag $CONTAINER_IMAGE:latest .
+  - docker push $CONTAINER_IMAGE:$CI_COMMIT_SHA
+  - docker push $CONTAINER_IMAGE:latest
+
+testLibrariesExist:
+ stage: test
+ image: $CONTAINER_IMAGE:latest
+ script:
+  - cd /root/ns-3.29
+  - test -s build/src/grail/libnovdso.so
+  - test -s build/lib/libns3-dev-grail-debug.so
+
+testOlsrExample:
+ stage: test
+ image: $CONTAINER_IMAGE:latest
+ script:
+  - cd /root/ns-3.29
+  - ./waf --run 'grail-olsr-example --n=9 --transientPhase=30 --measurePhase=30 --pcap=true --enablePreloading=true' && echo "confirmed; executed gRaIL /w OLSR (1/2)"
+  - sha256sum grail-olsr-example-wlan-*.pcap > run1.sha256
+  - ./waf --run 'grail-olsr-example --n=9 --transientPhase=30 --measurePhase=30 --pcap=true --enablePreloading=true' && echo "confirmed; executed gRaIL /w OLSR (2/2)"
+  - sha256sum grail-olsr-example-wlan-*.pcap > run2.sha256
+  - diff run1.sha256 run2.sha256 && echo "confirmed; no difference between consecutive runs, great."
+
+testIperfExample:
+ stage: test
+ image: $CONTAINER_IMAGE:latest
+ script:
+  - cd /root/ns-3.29
+  - ./waf --run 'grail-iperf-example --enablePreloading=true --pcap=true'
+  - sha256sum *.pcap > run1.sha256
+  - ./waf --run 'grail-iperf-example --enablePreloading=true --pcap=true'
+  - sha256sum *.pcap > run2.sha256
+  - diff run1.sha256 run2.sha256 && echo "confirmed; no difference between consecutive runs, great."
