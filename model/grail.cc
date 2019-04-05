@@ -1936,8 +1936,18 @@ struct GrailApplication::Priv
         // read packet and sender address from ns3
         uint8_t _buffer[ALIGN(length)];
         Address ns3Address;
-        int rlen = sock->RecvFrom(_buffer, length, flags, ns3Address);
 
+        // WARNING: Don't use RecvFrom like this from ns-3, unlike Unix, it wont kill packet from the queue sometimes
+        // (!!!dontuse!!!) int rlen = sock->RecvFrom(_buffer, length, flags, ns3Address);
+        // Instead, use the API like this:
+        int rlen = 0;
+        {
+          Ptr<Packet> p = sock->RecvFrom (std::numeric_limits<uint32_t>::max(), flags, ns3Address);
+          if (p != 0) {
+            p->CopyData (_buffer, std::min((uint32_t)length, p->GetSize ()));
+            rlen = p->GetSize ();
+          }
+        }
 
         // copy from address to tracee
         if(!SetBsdAddress(ns3Address, address, address_len)) {
